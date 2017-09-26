@@ -13,11 +13,9 @@ CPU *make_cpu(size_t mem_size) {
 * Instruction decode spec
 * Opcodes are 8 bit
 * Operands are 8 to 64 bit
-* first two bits determine length: 1, 2, 4, 8 bytes
+* length of operands is dependant on instruction
 */
 instr_fp decode_instr(CPU *cpu) {
   uint8_t op = cpu->memory[cpu->regs.cur];
   return instruction_set[op-1];
 }
-
-
