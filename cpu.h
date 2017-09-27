@@ -1,6 +1,8 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
+#define GET_OPERAND(X) (((X *)cpu->memory)[(*(X *)&cpu->regs.cur)++])
+
 #define REG(x) union {\
     int64_t  s8; \
     uint64_t u8; \
