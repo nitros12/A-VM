@@ -24,30 +24,32 @@ ccc = 6
 ddd = 7
 */
 
-#define INSTR(X) X##1, X##2, X##4, X##8
+void mov(CPU *, cpu_size);
+void add(CPU *, cpu_size);
+void mul(CPU *, cpu_size);
+void sub(CPU *, cpu_size);
+void udiv(CPU *, cpu_size); // TODO:  implement
+void idiv(CPU *, cpu_size);
+void psh(CPU *, cpu_size);
+void pop(CPU *, cpu_size);
+void sxt(CPU *, cpu_size);
+void axt(CPU *, cpu_size);
 
 const instr_fp instruction_set[] = {
-    INSTR(mov),  INSTR(add), INSTR(mul),  INSTR(sub), INSTR(udiv),
-    INSTR(idiv), INSTR(psh), INSTR(pop),  INSTR(sxt), INSTR(axt),
-    INSTR(or),   INSTR(and), INSTR (xor), INSTR(not), INSTR(neg)};
+    mov,
+    add,
+    mul,
+    sub,
+    udiv,
+    idiv,
+    psh,
+    pop,
+    sxt,
+    axt,
+};
 
-void mov(CPU *cpu) {}
-void mov(CPU *cpu) {}
-void mov(CPU *cpu) {}
-void mov(CPU *cpu) {}
-void add(CPU *cpu) {}
-void add(CPU *cpu) {}
-void add(CPU *cpu) {}
-void add(CPU *cpu) {}
-void mul(CPU *cpu) {}
-void mul(CPU *cpu) {}
-void mul(CPU *cpu) {}
-void mul(CPU *cpu) {}
-void sub(CPU *cpu) {}
-void sub(CPU *cpu) {}
-void sub(CPU *cpu) {}
-void sub(CPU *cpu) {}
-void udiv(CPU *cpu) {}
-void udiv(CPU *cpu) {}
-void udiv(CPU *cpu) {}
-void udiv(CPU *cpu) {} // TODO: complete list and implement
+
+
+void mov(CPU *cpu, cpu_size size) {
+    uint16_t loc = GET_OPERAND(uint16_t, cpu);
+}

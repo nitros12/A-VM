@@ -8,18 +8,8 @@ CPU *make_cpu(size_t mem_size) {
   CPU *cpu = malloc(sizeof(CPU) + sizeof(uint8_t) * mem_size);
   cpu->cycles = 0;
   cpu->regs[cur].u8 = 0;
+  cpu->flags.running = 1;
   return cpu;
-}
-
-/*
-* Instruction decode spec
-* Opcodes are 8 bit
-* Operands are 8 to 64 bit
-* length of operands is dependant on instruction
-*/
-instr_fp decode_instr(CPU *cpu) {
-  uint8_t op = cpu->memory[cpu->regs[cur].u8];
-  return instruction_set[op-1];
 }
 
 cpu_union cpu_getloc(CPU *cpu, uint16_t loc) {
@@ -44,7 +34,7 @@ void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
 
     bool reg = TO_REG(loc);
     bool deref = TO_LOC(loc);
-
+    // TODO: rewrite these to use incremental copies and shifts instead of the dodgy pointer casting
     if (deref) {
         loc = cpu_getloc(cpu, loc).u2;
         switch (size) {
@@ -69,5 +59,16 @@ void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
                 case w4: *(uint32_t *)&cpu->memory[loc] = src.u4; break;
                 case w8: *(uint64_t *)&cpu->memory[loc] = src.u8; break;
             }
+    }
+}
+
+void run_cpu(CPU *cpu) {
+    instr_fp current;
+    cpu_size size;
+    while (cpu->flags.running) {
+        current = GET_INSTR(GET_CUR(cpu));
+        size = GET_SIZE(GET_CUR(cpu));
+        GET_CUR(cpu)++;
+        current(cpu, size);
     }
 }
