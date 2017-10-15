@@ -15,8 +15,7 @@ CPU *make_cpu(size_t mem_size) {
 cpu_union cpu_getloc(CPU *cpu, uint16_t loc) {
     bool reg = TO_REG(loc);
     bool deref = TO_LOC(loc);
-    cpu_union res = {.u8 = loc & 0b0011111111111111};
-
+    cpu_union res = {.u8 = STRIP_FLAGS(loc)};
     if (reg)
         res.u8 = cpu->regs[res.u8].u8;
     if (deref)
@@ -34,7 +33,6 @@ void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
 
     bool reg = TO_REG(loc);
     bool deref = TO_LOC(loc);
-    // TODO: rewrite these to use incremental copies and shifts instead of the dodgy pointer casting
     if (deref) {
         loc = cpu_getloc(cpu, loc).u2;
         switch (size) {
@@ -44,7 +42,7 @@ void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
             case w8: *(uint64_t *)&cpu->memory[loc] = src.u8; break;
         }
     } else {
-        loc &= 0b0011111111111111;
+        loc = STRIP_FLAGS(loc);
         if (reg)
             switch (size) {
                 case w1: cpu->regs[loc].u1 = src.u1; break;
@@ -71,4 +69,25 @@ void run_cpu(CPU *cpu) {
         GET_CUR(cpu)++;
         current(cpu, size);
     }
+}
+
+
+// Read file into start of cpu memory
+void load_file(CPU *cpu, const char *name) {
+    FILE *fp = fopen(name, "r");
+    if (fp == NULL) fputs("Unable to open file", stderr);
+
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    rewind(fp);
+
+    fread(cpu->memory, 1, size, fp);
+    fclose(fp);
+}
+
+int main(int argc, char **argv) {
+    if (argc != 2) fprintf(stderr, "Usage: %s <program file>", *argv);
+    CPU *cpu = make_cpu(1 << 16);
+    load_file(cpu, argv[1]);
+    run_cpu(cpu);
 }

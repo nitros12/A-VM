@@ -8,8 +8,13 @@
 #define GET_INSTR(X) (instruction_set[(X & 0b00111111) - 1])
 #define GET_CUR(X) (X->memory[X->regs[cur].u8])
 
-#define TO_REG(X) (0b100000000000 & X)
-#define TO_LOC(X) (0b010000000000 & X)
+#define TO_REG(X) ((1 << 15) & X)
+#define TO_LOC(X) ((1 << 14) & X)
+
+#define REG(X)    ((1 << 15) | X)
+#define DEREF(X)  ((1 << 14) | X)
+
+#define STRIP_FLAGS(X) (X & ~((1 << 15) | (1 << 14)))
 
 
 typedef union {
@@ -47,7 +52,7 @@ typedef struct {
         int pos:1;
         int eq:1;
     } flags;
-    uint8_t memory[];
+    uint8_t *memory;
 } CPU;
 
 typedef void (*instr_fp)(CPU *, cpu_size);
