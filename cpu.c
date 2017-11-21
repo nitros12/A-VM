@@ -12,17 +12,82 @@ CPU *make_cpu(size_t mem_size) {
   return cpu;
 }
 
-cpu_union cpu_getloc(CPU *cpu, uint16_t loc) {
-    bool reg = TO_REG(loc);
-    bool deref = TO_LOC(loc);
-    cpu_union res = {.u8 = STRIP_FLAGS(loc)};
-    if (reg)
-        res.u8 = cpu->regs[res.u8].u8;
-    if (deref)
-        res.u8 = *(uint64_t *)&cpu->memory[res.u8];
-    return res;
+// TODO: see if this can be made better
+uint64_t cpu_unpack(cpu_union mem, cpu_size size) {
+    switch (size) {
+    case w8: return mem.u8;
+    case w4: return mem.u4;
+    case w2: return mem.u2;
+    case w1: return mem.u1;
+    }
 }
 
+cpu_union cpu_pack(uint64_t n, cpu_size size) {
+    cpu_union r;
+    switch (size) {
+    case w8: r.u8 = (uint64_t) n;
+    case w4: r.u4 = (uint32_t) n;
+    case w2: r.u2 = (uint16_t) n;
+    case w1: r.u1 = (uint8_t)  n;
+    }
+    return r;
+}
+
+void write_memory(CPU *cpu, uint16_t loc, uint64_t mem, cpu_size size) {
+    switch (size) {
+    case w8:
+        cpu->memory[loc+7] = mem >> (8 * 7) & 0xff;
+        cpu->memory[loc+6] = mem >> (8 * 6) & 0xff;
+        cpu->memory[loc+5] = mem >> (8 * 5) & 0xff;
+        cpu->memory[loc+4] = mem >> (8 * 4) & 0xff;
+    case w4:
+        cpu->memory[loc+3] = mem >> (8 * 3) & 0xff;
+        cpu->memory[loc+2] = mem >> (8 * 2) & 0xff;
+    case w2:
+        cpu->memory[loc+1] = mem >> (8 * 1) & 0xff;
+    case w1:
+        cpu->memory[loc+0] = mem >> (8 * 0) & 0xff;
+    } // muh alignment
+}
+
+cpu_union read_memory(CPU *cpu, uint16_t loc, cpu_size size) {
+#define get_index(l) (cpu->memory[loc+l] << (8 * l) & (0xFF << (8 * l)))
+    cpu_union t;
+
+    switch (size) {
+    case w8: {
+        t.u8 = 0;
+        for (int i = 0; i < 8; i++)
+            t.u8 |= get_index(i);
+    }
+    case w4: {
+        t.u4 = 0;
+        for (int i = 0; i < 4; i++)
+            t.u4 |= get_index(i);
+    }
+    case w2: {
+        t.u2 = 0;
+        for (int i = 0; i < 2; i++)
+            t.u2 |= get_index(i);
+    }
+    case w1: {
+        t.u1 = get_index(0);
+    }
+    }
+    return t;
+#undef get_index
+}
+
+cpu_union cpu_getloc(CPU *cpu, uint16_t loc, cpu_size size) {
+    bool reg = TO_REG(loc);
+    bool deref = TO_LOC(loc);
+    uint64_t res =STRIP_FLAGS(loc);
+    if (reg)
+        res = cpu_unpack(cpu->regs[res], size);
+    if (deref)
+        res = cpu_unpack(read_memory(cpu, loc, size), size);
+    return cpu_pack(res, size);
+}
 
 /*
 * :param loc: start location to set to
@@ -34,13 +99,9 @@ void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
     bool reg = TO_REG(loc);
     bool deref = TO_LOC(loc);
     if (deref) {
-        loc = cpu_getloc(cpu, loc).u2;
-        switch (size) {
-            case w1: *(uint8_t *)&cpu->memory[loc] = src.u1; break;
-            case w2: *(uint16_t *)&cpu->memory[loc] = src.u2; break;
-            case w4: *(uint32_t *)&cpu->memory[loc] = src.u4; break;
-            case w8: *(uint64_t *)&cpu->memory[loc] = src.u8; break;
-        }
+        // Read reg/ mem, write to location
+        cpu_union res = cpu_getloc(cpu, STRIP_DEREF(loc), w2);
+        write_memory(cpu, cpu_unpack(res, w2), cpu_unpack(src, size), size);
     } else {
         loc = STRIP_FLAGS(loc);
         if (reg)
@@ -51,12 +112,7 @@ void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
                 case w8: cpu->regs[loc].u8 = src.u8; break;
             }
         else
-            switch (size) {
-                case w1: *(uint8_t *)&cpu->memory[loc] = src.u1; break;
-                case w2: *(uint16_t *)&cpu->memory[loc] = src.u2; break;
-                case w4: *(uint32_t *)&cpu->memory[loc] = src.u4; break;
-                case w8: *(uint64_t *)&cpu->memory[loc] = src.u8; break;
-            }
+            write_memory(cpu, loc, cpu_unpack(src, size), size);
     }
 }
 

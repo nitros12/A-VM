@@ -14,8 +14,9 @@
 #define REG(X)    ((1 << 15) | X)
 #define DEREF(X)  ((1 << 14) | X)
 
-#define STRIP_FLAGS(X) (X & ~((1 << 15) | (1 << 14)))
-
+#define STRIP_DEREF(X) (X & ~(1 << 14))
+#define STRIP_REG(X) (X & ~(1 << 14))
+#define STRIP_FLAGS(X) (STRIP_DEREF(STRIP_REG(X)))
 
 typedef union {
     int64_t  s8;
@@ -57,7 +58,11 @@ typedef struct {
 
 typedef void (*instr_fp)(CPU *, cpu_size);
 
-cpu_union cpu_getloc(CPU *, uint16_t);
+uint64_t cpu_unpack(cpu_union, cpu_size);
+cpu_union cpu_pack(uint64_t, cpu_size);
+void write_memory(CPU *, uint16_t, uint64_t, cpu_size);
+cpu_union read_memory(CPU *, uint16_t, cpu_size);
+cpu_union cpu_getloc(CPU *, uint16_t, cpu_size);
 void cpu_setloc(CPU *, uint16_t, cpu_size, cpu_union);
 
 extern const instr_fp instruction_set[];
