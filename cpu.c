@@ -6,9 +6,10 @@
 
 CPU *make_cpu(size_t mem_size) {
   CPU *cpu = malloc(sizeof(CPU) + sizeof(uint8_t) * mem_size);
+  cpu->meta.errd = false;
   cpu->cycles = 0;
   cpu->regs[cur].u8 = 0;
-  cpu->flags.running = 1;
+  cpu->flags.running = true;
   return cpu;
 }
 
@@ -51,27 +52,27 @@ void write_memory(CPU *cpu, uint16_t loc, uint64_t mem, cpu_size size) {
 }
 
 cpu_union read_memory(CPU *cpu, uint16_t loc, cpu_size size) {
-#define get_index(l) (cpu->memory[loc+l] << (8 * l) & (0xFF << (8 * l)))
-    cpu_union t;
+#define get_index(l) ((uint64_t)(cpu->memory[loc+l] << (8 * l) & (0xFF << (8 * l))))
+    cpu_union t = {0};
 
     switch (size) {
     case w8: {
-        t.u8 = 0;
+        // t.u8 = 0;
         for (int i = 0; i < 8; i++)
             t.u8 |= get_index(i);
     }
     case w4: {
-        t.u4 = 0;
+        // t.u4 = 0;
         for (int i = 0; i < 4; i++)
             t.u4 |= get_index(i);
     }
     case w2: {
-        t.u2 = 0;
+        // t.u2 = 0;
         for (int i = 0; i < 2; i++)
             t.u2 |= get_index(i);
     }
     case w1: {
-        t.u1 = get_index(0);
+        t.u1 = 0xFF & get_index(0);
     }
     }
     return t;
@@ -101,7 +102,7 @@ void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
     if (deref) {
         // Read reg/ mem, write to location
         cpu_union res = cpu_getloc(cpu, STRIP_DEREF(loc), w2);
-        write_memory(cpu, cpu_unpack(res, w2), cpu_unpack(src, size), size);
+        write_memory(cpu, (uint16_t)cpu_unpack(res, w2), cpu_unpack(src, size), size);
     } else {
         loc = STRIP_FLAGS(loc);
         if (reg)
@@ -127,6 +128,11 @@ void run_cpu(CPU *cpu) {
     }
 }
 
+void cpu_panic(CPU *cpu, char * err) {
+    cpu->meta.errmsg = err;
+    cpu->meta.errd = true;
+    cpu->flags.running = false;
+}
 
 // Read file into start of cpu memory
 void load_file(CPU *cpu, const char *name) {
@@ -134,7 +140,7 @@ void load_file(CPU *cpu, const char *name) {
     if (fp == NULL) fputs("Unable to open file", stderr);
 
     fseek(fp, 0, SEEK_END);
-    long size = ftell(fp);
+    size_t size = (size_t)ftell(fp);
     rewind(fp);
 
     fread(cpu->memory, 1, size, fp);

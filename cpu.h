@@ -2,10 +2,11 @@
 #include <stdlib.h>
 
 // get an operand of type X, and increment the cur by that amount
-#define GET_OPERAND(X, CPU) ((*(X *)&CPU->memory[CPU->regs[cur].u8])++)
+#define GET_OPERAND(T, CPU) ((CPU->memory[CPU->regs[cur].u8]+=(sizeof(T)/sizeof(uint8_t))), \
+                             (CPU->memory[CPU->regs[cur].u8-(sizeof(T)/sizeof(uint8_t))]))
 
-#define GET_SIZE(X) ((X & 0b11000000) >> 6)
-#define GET_INSTR(X) (instruction_set[(X & 0b00111111) - 1])
+#define GET_SIZE(X) ((X & 0xC0) >> 6)
+#define GET_INSTR(X) (instruction_set[(X & 0x3F) - 1])
 #define GET_CUR(X) (X->memory[X->regs[cur].u8])
 
 #define TO_REG(X) ((1 << 15) & X)
@@ -46,14 +47,18 @@ typedef enum {
 } registers;
 
 typedef struct {
+    struct {
+        uint8_t running:1;
+        uint8_t pos:1;
+        uint8_t eq:1;
+    } flags;
+    struct {
+        char *errmsg;
+        char errd;
+    } meta;
     uint64_t cycles;
     cpu_union regs[6];
-    struct {
-        int running:1;
-        int pos:1;
-        int eq:1;
-    } flags;
-    uint8_t *memory;
+    uint8_t memory[];
 } CPU;
 
 typedef void (*instr_fp)(CPU *, cpu_size);
@@ -64,5 +69,9 @@ void write_memory(CPU *, uint16_t, uint64_t, cpu_size);
 cpu_union read_memory(CPU *, uint16_t, cpu_size);
 cpu_union cpu_getloc(CPU *, uint16_t, cpu_size);
 void cpu_setloc(CPU *, uint16_t, cpu_size, cpu_union);
+CPU *make_cpu(size_t);
+void run_cpu(CPU *);
+void load_file(CPU *, const char *);
+void cpu_panic(CPU *, char *);
 
 extern const instr_fp instruction_set[];
