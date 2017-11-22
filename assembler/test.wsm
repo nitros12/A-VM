@@ -1,0 +1,3 @@
+mov2 %aaa 9999;
+mov2 %bbb %aaa;
+halt;

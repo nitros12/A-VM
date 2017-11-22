@@ -82,7 +82,7 @@ cpu_union read_memory(CPU *cpu, uint16_t loc, cpu_size size) {
 cpu_union cpu_getloc(CPU *cpu, uint16_t loc, cpu_size size) {
     bool reg = TO_REG(loc);
     bool deref = TO_LOC(loc);
-    uint64_t res =STRIP_FLAGS(loc);
+    uint64_t res = STRIP_FLAGS(loc);
     if (reg)
         res = cpu_unpack(cpu->regs[res], size);
     if (deref)
@@ -123,7 +123,9 @@ void run_cpu(CPU *cpu) {
     while (cpu->flags.running) {
         current = GET_INSTR(GET_CUR(cpu));
         size = GET_SIZE(GET_CUR(cpu));
-        GET_CUR(cpu)++;
+        cpu->regs[cur].u8++;
+        printf("%ld | %3d -> %p, s: %d\n", cpu->regs[cur].u8 - 1,
+               GET_CUR(cpu) & 0x3F, current, size);
         current(cpu, size);
     }
 }
@@ -137,18 +139,21 @@ void cpu_panic(CPU *cpu, char * err) {
 // Read file into start of cpu memory
 void load_file(CPU *cpu, const char *name) {
     FILE *fp = fopen(name, "r");
-    if (fp == NULL) fputs("Unable to open file", stderr);
+    if (fp == NULL) {
+        fputs("Unable to open file\n", stderr);
+        return;
+    }
 
     fseek(fp, 0, SEEK_END);
     size_t size = (size_t)ftell(fp);
     rewind(fp);
 
-    fread(cpu->memory, 1, size, fp);
+    fread(cpu->memory, 2, size, fp);
     fclose(fp);
 }
 
 int main(int argc, char **argv) {
-    if (argc != 2) fprintf(stderr, "Usage: %s <program file>", *argv);
+    if (argc != 2) fprintf(stderr, "Usage: %s <program file>\n", *argv);
     CPU *cpu = make_cpu(1 << 16);
     load_file(cpu, argv[1]);
     run_cpu(cpu);
