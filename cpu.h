@@ -17,40 +17,41 @@
 #define STRIP_FLAGS(X) (STRIP_DEREF(STRIP_REG(X)))
 
 typedef union {
-  int64_t s8;
-  uint64_t u8;
-  int32_t s4;
-  uint32_t u4;
-  int16_t s2;
-  uint16_t u2;
-  int8_t s1;
-  uint8_t u1;
+    int64_t s8;
+    uint64_t u8;
+    int32_t s4;
+    uint32_t u4;
+    int16_t s2;
+    uint16_t u2;
+    int8_t s1;
+    uint8_t u1;
 } cpu_union;
 
 typedef enum { w1 = 1, w2 = 2, w4 = 3, w8 = 4 } cpu_size;
 
 typedef enum {
-  aaa = 0,
-  bbb,
-  stk,
-  bsp,
-  acc,
-  cur,
+    aaa = 0,
+    bbb,
+    stk,
+    bsp,
+    acc,
+    cur,
 } registers;
 
 typedef struct {
-  struct {
-    uint8_t running : 1;
-    uint8_t pos : 1;
-    uint8_t eq : 1;
-  } flags;
-  struct {
-    char *errmsg;
-    char errd;
-  } meta;
-  uint64_t cycles;
-  cpu_union regs[6];
-  uint8_t memory[];
+    struct {
+        uint8_t running : 1;
+        uint8_t pos : 1;
+        uint8_t eq : 1;
+        uint8_t le : 1;
+    } flags;
+    struct {
+        char *errmsg;
+        char errd;
+    } meta;
+    uint64_t cycles;
+    cpu_union regs[6];
+    uint8_t memory[];
 } CPU;
 
 typedef void (*instr_fp)(CPU *, cpu_size);
@@ -65,5 +66,7 @@ CPU *make_cpu(size_t);
 void run_cpu(CPU *);
 void load_file(CPU *, const char *);
 void cpu_panic(CPU *, char *);
+void cpu_push(CPU *, cpu_union, cpu_size);
+cpu_union cpu_pop(CPU *, cpu_size);
 
 extern const instr_fp instruction_set[];
