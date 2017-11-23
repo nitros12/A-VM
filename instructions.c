@@ -66,7 +66,8 @@ uint64_t get_operand(CPU *cpu, cpu_size size) {
     }
 
 MATH_FUNC(add, +, u)
-MATH_FUNC(mul, -, u)
+MATH_FUNC(sub, -, u)
+MATH_FUNC(mul, *, u)
 MATH_FUNC(udiv, /, u)
 MATH_FUNC(idiv, /, s)
 MATH_FUNC(shl, <<, u)
@@ -157,30 +158,37 @@ void jmp(CPU *cpu, cpu_size size) {
     switch (cond) {
     case 0:
         cpu->regs[cur] = loc;
+        break;
     case 1:
         if (cpu->flags.le) {
             cpu->regs[cur] = loc;
         }
+        break;
     case 2:
         if (cpu->flags.le || cpu->flags.eq) {
             cpu->regs[cur] = loc;
         }
+        break;
     case 3:
         if (cpu->flags.eq) {
             cpu->regs[cur] = loc;
         }
+        break;
     case 4:
         if (!cpu->flags.eq) {
             cpu->regs[cur] = loc;
         }
+        break;
     case 5:
         if (!cpu->flags.le && !cpu->flags.eq) {
             cpu->regs[cur] = loc;
         }
+        break;
     case 6:
         if (!cpu->flags.le) {
             cpu->regs[cur] = loc;
         }
+        break;
     default:
         cpu_panic(cpu, "Invalid condition passed to jmp instruction");
     }
@@ -232,5 +240,5 @@ void putc_(CPU *cpu, cpu_size size) {
 }
 
 const instr_fp instruction_set[]
-    = {mov, add, udiv, idiv, shl,  shr,  sal, sar,  and, or,    xor,
+= {mov, add, sub, mul, udiv, idiv, shl,  shr, sal,  sar, and,   or,   xor,
        sxu, sxi, halt, jmp,  stks, push, pop, call, ret, getc_, putc_};

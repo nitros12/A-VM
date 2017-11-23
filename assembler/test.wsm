@@ -1,3 +1,6 @@
-mov2 %aaa 9999;
-mov2 %bbb %aaa;
+mov %aaa 'g';
+putc %aaa;
+sub %aaa 'a' %aaa;
+add %aaa 'A' %aaa;
+putc %aaa;
 halt;

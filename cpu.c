@@ -157,6 +157,8 @@ void run_cpu(CPU *cpu) {
         /*        GET_CUR(cpu) & 0x3F, current, size); */
         current(cpu, size);
     }
+    if (cpu->meta.errd)
+        puts(cpu->meta.errmsg);
 }
 
 void cpu_panic(CPU *cpu, char *err) {

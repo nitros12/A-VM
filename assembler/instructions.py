@@ -2,12 +2,8 @@ import enum
 
 
 class ops(enum.IntEnum):
-    (mov, add, udiv, idiv,
-     shl, shr, sal, sar,
-     and_, or_, xor, sxu,
-     sxi, halt, jmp, stks,
-     push, pop, call, ret,
-     getc, putc) = range(22)
+    (mov, add, sub, mul, udiv, idiv, shl, shr, sal, sar, and_, or_, xor, sxu, sxi,
+     halt, jmp, stks, push, pop, call, ret, getc, putc) = range(24)
 
 
 class Register(enum.IntEnum):
@@ -19,19 +15,23 @@ class Register(enum.IntEnum):
     cur = 5
 
 
-def hexpad(val: int, size: int=4):
+def hexpad(val: int, size: int = 4):
     """Compile integer into 4 char padded hex."""
     if val > (1 << 8 * size) - 1:
-        raise Exception(f"Cannot pack value larger than {hex((1 << 8 * size) - 1)}")
+        raise Exception(
+            f"Cannot pack value larger than {hex((1 << 8 * size) - 1)}")
     return hex(val)[2:].zfill(size).upper()
 
 
-def wrap_hexpad(size: int=4):
+def wrap_hexpad(size: int = 4):
     def aaa(func):
         """A decorator to hexpad the result of a function."""
+
         def inner(*args, **kwargs):
             return hexpad(func(*args, **kwargs), size)
+
         return inner
+
     return aaa
 
 
@@ -49,15 +49,10 @@ class Compilable:
 
 
 class Instruction:
-
     def __init__(self, instr, size, *args):
         self.instr = instr
         self.args = args
-        self.size = {"1": 1,
-                     "2": 2,
-                     "4": 3,
-                     "8": 4
-                     }[size]
+        self.size = {"1": 1, "2": 2, "4": 3, "8": 4}[size]
 
     def __str__(self):
         args = " ".join(map(str, self.args))
@@ -67,6 +62,7 @@ class Instruction:
         return len(self.args) + 1
 
     def compile(self, context):
-        comp = hexpad(self.instr | self.size << 6, 2) + "".join(i.compile(context) for i in self.args)
+        comp = hexpad(self.instr | self.size << 6, 2) + "".join(
+            i.compile(context) for i in self.args)
         print(f"compiling: {self} -> {comp}")
         return comp
