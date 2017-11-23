@@ -13,7 +13,7 @@
 #define DEREF(X) ((1 << 14) | X)
 
 #define STRIP_DEREF(X) (X & ~(1 << 14))
-#define STRIP_REG(X) (X & ~(1 << 14))
+#define STRIP_REG(X) (X & ~(1 << 15))
 #define STRIP_FLAGS(X) (STRIP_DEREF(STRIP_REG(X)))
 
 typedef union {

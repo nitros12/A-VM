@@ -2,20 +2,12 @@ import enum
 
 
 class ops(enum.IntEnum):
-    mov = 0
-    add = 1
-    udiv = 2
-    idiv = 3
-    shl = 4
-    shr = 5
-    sal = 6
-    sar = 7
-    and_ = 8
-    or_ = 9
-    xor = 10
-    sxu = 11
-    sxi = 12
-    halt = 13
+    (mov, add, udiv, idiv,
+     shl, shr, sal, sar,
+     and_, or_, xor, sxu,
+     sxi, halt, jmp, stks,
+     push, pop, call, ret,
+     getc, putc) = range(22)
 
 
 class Register(enum.IntEnum):
@@ -45,7 +37,7 @@ def wrap_hexpad(size: int=4):
 
 def pack_address(value, *, is_reg=False, is_deref=False):
     """Pack an address into an integer."""
-    return value | is_reg << 14 | is_deref << 15
+    return value | is_reg << 15 | is_deref << 14
 
 
 class Compilable:

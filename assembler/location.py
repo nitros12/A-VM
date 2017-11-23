@@ -60,7 +60,7 @@ class Location:
     label_ref = pp.Word(pp.alphanums)
     label_ref.setParseAction(lambda t: Reference(t[0]))
 
-    quote = "\'"
+    quote = "'"
     char_lit_escapes = pp.Word(r"\n\r\t", max=2) | pp.Word(pp.alphanums, max=1)
     char_lit = pp.Combine(quote + char_lit_escapes + quote)
     char_lit.setParseAction(lambda t: Reference(ord(ast.literal_eval(t[0]))))

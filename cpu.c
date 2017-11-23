@@ -115,7 +115,7 @@ void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
                      size);
     } else {
         loc = STRIP_FLAGS(loc);
-        if (reg)
+        if (reg) {
             switch (size) {
             case w1:
                 cpu->regs[loc].u1 = src.u1;
@@ -130,6 +130,7 @@ void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
                 cpu->regs[loc].u8 = src.u8;
                 break;
             }
+        }
         else
             write_memory(cpu, loc, cpu_unpack(src, size), size);
     }

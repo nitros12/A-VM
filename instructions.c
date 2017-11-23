@@ -141,7 +141,7 @@ void halt(CPU *cpu, cpu_size size) {
 }
 
 void jmp(CPU *cpu, cpu_size size) {
-    uint8_t cond = get_operand(cpu, w1);
+    uint8_t cond = get_operand(cpu, w2);
     cpu_union loc = cpu_getloc(cpu, get_operand(cpu, size), size);
     /*
       cond:
@@ -226,7 +226,8 @@ void getc_(CPU *cpu, cpu_size size) {
 
 void putc_(CPU *cpu, cpu_size size) {
     UNUSED(size);
-    uint8_t val = cpu_getloc(cpu, get_operand(cpu, w1), w1).u1;
+    uint16_t op = get_operand(cpu, w2);
+    uint8_t val = cpu_getloc(cpu, op, w2).u2;
     putchar(val);
 }
 

@@ -24,7 +24,7 @@ class Label:
         self.name = name[1:]
 
 
-class AssemberContext(Compilable):
+class AssemberContext:
 
     def __init__(self, data):
         self.data = data
