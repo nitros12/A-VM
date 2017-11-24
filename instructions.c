@@ -1,33 +1,34 @@
 #include "cpu.h"
 #include <stdio.h>
 
-/*
-  sxi = 8  # sign extend,  1 -> 2, 10000000 -> 1111111110000000
-
-  class Register(IntEnum):
-  stk = 1  # stack pointer
-  bas = 2  # base pointer
-  acc = 3  # accumulator
-  aaa = 4
-  bbb = 5
-  ccc = 6
-  ddd = 7
-*/
+/**
+ * @file instructions.c
+ * @author Ben Simms
+ * @date 2017-11-24
+ * @brief VM Instruction Set.
+ */
 
 #define UNUSED(x) ((void)x)
 
+/**
+ * @brief Get an operand, incrementing the current instruction pointer.
+ * @param size Size to read and to increment cur by.
+ */
 uint64_t get_operand(CPU *cpu, cpu_size size) {
     cpu_union r = read_memory(cpu, cpu->regs[cur].u8, size);
     cpu->regs[cur].u8 += (1 << (size - 1));
 
+    // We read params in little endian but our assembler gives big endian, so we need to convert here.
     switch (size) { // AAAAAAAAAAAAAAAAAAHHHHHHHHHHHH
     case w1:
         return r.u1;
     case w2:
         return ((r.u2 & 0xff00) >> 8) | ((r.u2 & 0x00ff) << 8);
     case w4:
-        return ((r.u4 & 0x000000ff) << 24) | ((r.u4 & 0x0000ff00) << 8)
-               | ((r.u4 & 0x00ff00000) >> 8) | ((r.u4 & 0xff000000) >> 24);
+        return ((r.u4 & 0x000000ff) << 24)
+            | ((r.u4 & 0x0000ff00) << 8)
+            | ((r.u4 & 0x0ff00000) >> 8)
+            | ((r.u4 & 0xff000000) >> 24);
     case w8:
         return ((r.u8 & 0xff00000000000000) << 56)
                | ((r.u8 & 0x00ff000000000000) >> 40)
@@ -40,6 +41,9 @@ uint64_t get_operand(CPU *cpu, cpu_size size) {
     }
 }
 
+/**
+ * @brief Build a binary operation function.
+ */
 #define MATH_FUNC(NAME, OPERATOR, SIGN)                                        \
     void NAME(CPU *cpu, cpu_size size) {                                       \
         uint16_t a_l = get_operand(cpu, w2);                                   \
@@ -65,6 +69,13 @@ uint64_t get_operand(CPU *cpu, cpu_size size) {
         cpu_setloc(cpu, to_l, size, out);                                      \
     }
 
+
+/**
+ * @brief data manipulation instructions.
+ *
+ * These all take 3 operands, op1 and op2 are parameters to the operation. op3 is the destination.
+ */
+
 MATH_FUNC(add, +, u)
 MATH_FUNC(sub, -, u)
 MATH_FUNC(mul, *, u)
@@ -78,7 +89,12 @@ MATH_FUNC(and, &, u)
 MATH_FUNC(or, |, u)
 MATH_FUNC (xor, ^, u)
 
-// move src into val, 2x u2 operands
+/**
+ * @brief MOV instruction: copy op1 into op2
+ *
+ * op1: from location
+ * op2: to location
+ */
 void mov(CPU *cpu, cpu_size size) {
     uint16_t loc = get_operand(cpu, w2);
     uint16_t src = get_operand(cpu, w2);
@@ -86,6 +102,9 @@ void mov(CPU *cpu, cpu_size size) {
     cpu_setloc(cpu, loc, size, val);
 }
 
+/**
+ * @brief Unsigned extend: extend a number to required size.
+ */
 void sxu(CPU *cpu, cpu_size size) {
     uint16_t src = get_operand(cpu, w2);
     uint16_t des = get_operand(cpu, w2);
@@ -111,6 +130,9 @@ void sxu(CPU *cpu, cpu_size size) {
     }
 }
 
+/**
+ * @brief Signed extend: extend a number to required size.
+ */
 void sxi(CPU *cpu, cpu_size size) {
     uint16_t src = get_operand(cpu, w2);
     uint16_t des = get_operand(cpu, w2);
@@ -141,6 +163,19 @@ void halt(CPU *cpu, cpu_size size) {
     cpu_panic(cpu, "CPU halted");
 }
 
+/**
+ * @brief Jump instruction.
+ *
+ * Op1: condition, Op2: location to jump to.
+ * cond:
+ * 0 => always
+ * 1 => LessThan
+ * 2 => LessEqual
+ * 3 => Equal
+ * 4 => NotEqual
+ * 5 => GreaterThan
+ * 6 => GreaterEqual
+ */
 void jmp(CPU *cpu, cpu_size size) {
     uint8_t cond = get_operand(cpu, w2);
     cpu_union loc = cpu_getloc(cpu, get_operand(cpu, size), size);

@@ -4,6 +4,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * @file cpu.c
+ * @author Ben Simms
+ * @date 2017-11-24
+ * @brief Integral VM file.
+ */
+
+/**
+ * @brief Construct the cpu struct, returning a pointer.
+ * @param mem_size Number of bytes to allocate for the cpu's memory.
+ */
 CPU *make_cpu(size_t mem_size) {
     CPU *cpu = malloc(sizeof(CPU) + sizeof(uint8_t) * mem_size);
     cpu->meta.errd = false;
@@ -13,7 +24,11 @@ CPU *make_cpu(size_t mem_size) {
     return cpu;
 }
 
-// TODO: see if this can be made better
+/**
+ * @brief Unpack a cpu_union into a the maximum size safely.
+ * @param mem The union to unpack.
+ * @param size The size of the union to unpack.
+ */
 uint64_t cpu_unpack(cpu_union mem, cpu_size size) {
     switch (size) {
     case w8:
@@ -27,6 +42,11 @@ uint64_t cpu_unpack(cpu_union mem, cpu_size size) {
     }
 }
 
+/**
+ * @brief Pack a uint64_t into a cpu union.
+ * @param n The uint64_t to pack.
+ * @param size The size to pack.
+ */
 cpu_union cpu_pack(uint64_t n, cpu_size size) {
     cpu_union r;
     switch (size) {
@@ -42,6 +62,14 @@ cpu_union cpu_pack(uint64_t n, cpu_size size) {
     return r;
 }
 
+/**
+ * @brief Write number into memory.
+ * @param loc Location to write to.
+ * @param mem Memory to write into memory.
+ * @param size Size to write.
+ *
+ * This writes numbers into memory lsb first, 0xABCD is written into memory [0xCD][0xAB]
+ */
 void write_memory(CPU *cpu, uint16_t loc, uint64_t mem, cpu_size size) {
     switch (size) {
     case w8:
@@ -59,6 +87,11 @@ void write_memory(CPU *cpu, uint16_t loc, uint64_t mem, cpu_size size) {
     } // muh alignment
 }
 
+/**
+ * @brief Read location in memory into a cpu union.
+ * @param loc Location to read from.
+ * @param size Size to read.
+ */
 cpu_union read_memory(CPU *cpu, uint16_t loc, cpu_size size) {
 #define get_index(l)                                                           \
     ((uint64_t)(cpu->memory[loc + l] << (8 * l) & (0xFF << (8 * l))))
@@ -88,6 +121,16 @@ cpu_union read_memory(CPU *cpu, uint16_t loc, cpu_size size) {
 #undef get_index
 }
 
+/**
+ * @brief Get a location, either immediate, register or dereference.
+ * @param loc Location to get.
+ * @param size Size of union to return. (Also size of memory to read if dereferencing).
+ *
+ * If the 16th bit is set, read from a register.
+ * If the 15th bit is set, read from memory.
+ * Register read is done before memory read, so [%reg] reads the memory at location reg.
+ * If none of the 16th or 15th bits are set, return the location passed packed into a cpu_union.
+ */
 cpu_union cpu_getloc(CPU *cpu, uint16_t loc, cpu_size size) {
     bool reg = TO_REG(loc);
     bool deref = TO_LOC(loc);
@@ -99,10 +142,15 @@ cpu_union cpu_getloc(CPU *cpu, uint16_t loc, cpu_size size) {
     return cpu_pack(res, size);
 }
 
-/*
- * :param loc: start location to set to
- * :param size: size to set
- * :param src: source to copy from
+/**
+ * @brief Set a location, either memory location, register.
+ * @param loc Location to write to.
+ * @param size Size to write.
+ * @param src Data to write.
+ *
+ * If no bits set, Write to memory at location `loc`.
+ * If register bit (16th) is set and deref bit is not, write to a register.
+ * If deref bit is set, pass to getloc and write to memory at returned location.
  */
 void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
 
@@ -136,16 +184,30 @@ void cpu_setloc(CPU *cpu, uint16_t loc, cpu_size size, cpu_union src) {
     }
 }
 
+/**
+ * @brief Push onto the stack.
+ * @param val Value to push onto stack.
+ * @param size Size to push.
+ *
+ * Pushing is post increment, the stack pointer ends after the written data.
+ */
 void cpu_push(CPU *cpu, cpu_union val, cpu_size size) {
     write_memory(cpu, cpu->regs[stk].u2, cpu_unpack(val, size), size);
     cpu->regs[stk].u2 += size;
 }
 
+/**
+ * @brief Pop from stack.
+ * @param size Size to pop off of the stack.
+ */
 cpu_union cpu_pop(CPU *cpu, cpu_size size) {
     cpu->regs[stk].u2 -= size;
     return read_memory(cpu, cpu->regs[stk].u2, size);
 }
 
+/**
+ * @brief Run a cpu until halted.
+ */
 void run_cpu(CPU *cpu) {
     instr_fp current;
     cpu_size size;
@@ -161,6 +223,9 @@ void run_cpu(CPU *cpu) {
         puts(cpu->meta.errmsg);
 }
 
+/**
+ * @brief Set cpu fail data and halt.
+ */
 void cpu_panic(CPU *cpu, char *err) {
     cpu->meta.errmsg = err;
     cpu->meta.errd = true;

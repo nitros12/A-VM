@@ -1,7 +1,12 @@
 #include <inttypes.h>
 #include <stdlib.h>
 
-// get an operand of type X, and increment the cur by that amount
+/**
+ * @file cpu.h
+ * @author Ben Simms
+ * @date 2017-11-24
+ */
+
 #define GET_SIZE(X) ((X & 0xC0) >> 6)
 #define GET_INSTR(X) (instruction_set[(X & 0x3F)])
 #define GET_CUR(X) (X->memory[X->regs[cur].u8])
@@ -16,6 +21,9 @@
 #define STRIP_REG(X) (X & ~(1 << 15))
 #define STRIP_FLAGS(X) (STRIP_DEREF(STRIP_REG(X)))
 
+/**
+ *  @brief Union to simplify different sizes possible in the vm.
+ */
 typedef union {
     int64_t s8;
     uint64_t u8;
@@ -27,8 +35,14 @@ typedef union {
     uint8_t u1;
 } cpu_union;
 
+/**
+ * @brief Map enums to width of cpu_union types.
+ */
 typedef enum { w1 = 1, w2 = 2, w4 = 3, w8 = 4 } cpu_size;
 
+/**
+ * @brief Registers available to the VM.
+ */
 typedef enum {
     aaa = 0,
     bbb,
@@ -38,10 +52,12 @@ typedef enum {
     cur,
 } registers;
 
+/**
+ * @brief Core VM state.
+ */
 typedef struct {
     struct {
         uint8_t running : 1;
-        uint8_t pos : 1;
         uint8_t eq : 1;
         uint8_t le : 1;
     } flags;
