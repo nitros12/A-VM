@@ -71,6 +71,33 @@ uint64_t get_operand(CPU *cpu, cpu_size size) {
 
 
 /**
+ * @brief Build a unary operation function
+ */
+#define UNARY_FUNC(NAME, OPERATOR)                  \
+    void NAME(CPU *cpu, cpu_size size) {            \
+        uint16_t a_l = get_operand(cpu, w2);        \
+        uint16_t to_l = get_operand(cpu, w2);       \
+        cpu_union val = cpu_getloc(cpu, a_l, size); \
+        cpu_union out;                              \
+        switch (size) {                             \
+        case w1:                                    \
+            out.u1 = OPERATOR val.u1;               \
+            break;                                  \
+        case w2:                                    \
+            out.u2 = OPERATOR val.u2;               \
+            break;                                  \
+        case w4:                                    \
+            out.u4 = OPERATOR val.u4;               \
+            break;                                  \
+        case w8:                                    \
+            out.u8 = OPERATOR val.u8;               \
+            break;                                  \
+        }                                           \
+        cpu_setloc(cpu, to_l, size, out);           \
+    }                                               \
+
+
+/**
  * @brief data manipulation instructions.
  *
  * These all take 3 operands, op1 and op2 are parameters to the operation. op3 is the destination.
@@ -88,6 +115,17 @@ MATH_FUNC(sar, >>, s)
 MATH_FUNC(and, &, u)
 MATH_FUNC(or, |, u)
 MATH_FUNC (xor, ^, u)
+
+/**
+ * @brief unary operation instructions.
+ * Each take two operands, op1 is the parameter, op2 is the destination.
+ */
+
+UNARY_FUNC(neg, -)
+UNARY_FUNC(pos, +)
+UNARY_FUNC(lnot, !)  //: Logical not
+UNARY_FUNC(bnot, ~)  //: Bitwise not
+
 
 /**
  * @brief MOV instruction: copy op1 into op2
