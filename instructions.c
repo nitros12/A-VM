@@ -18,17 +18,16 @@ uint64_t get_operand(CPU *cpu, cpu_size size) {
     cpu_union r = read_memory(cpu, cpu->regs[cur].u8, size);
     cpu->regs[cur].u8 += (1 << (size - 1));
 
-    // We read params in little endian but our assembler gives big endian, so we need to convert here.
+    // We read params in little endian but our assembler gives big endian, so we
+    // need to convert here.
     switch (size) { // AAAAAAAAAAAAAAAAAAHHHHHHHHHHHH
     case w1:
         return r.u1;
     case w2:
         return ((r.u2 & 0xff00) >> 8) | ((r.u2 & 0x00ff) << 8);
     case w4:
-        return ((r.u4 & 0x000000ff) << 24)
-            | ((r.u4 & 0x0000ff00) << 8)
-            | ((r.u4 & 0x0ff00000) >> 8)
-            | ((r.u4 & 0xff000000) >> 24);
+        return ((r.u4 & 0x000000ff) << 24) | ((r.u4 & 0x0000ff00) << 8)
+               | ((r.u4 & 0x0ff00000) >> 8) | ((r.u4 & 0xff000000) >> 24);
     case w8:
         return ((r.u8 & 0xff00000000000000) << 56)
                | ((r.u8 & 0x00ff000000000000) >> 40)
@@ -69,38 +68,37 @@ uint64_t get_operand(CPU *cpu, cpu_size size) {
         cpu_setloc(cpu, to_l, size, out);                                      \
     }
 
-
 /**
  * @brief Build a unary operation function
  */
-#define UNARY_FUNC(NAME, OPERATOR)                  \
-    void NAME(CPU *cpu, cpu_size size) {            \
-        uint16_t a_l = get_operand(cpu, w2);        \
-        uint16_t to_l = get_operand(cpu, w2);       \
-        cpu_union val = cpu_getloc(cpu, a_l, size); \
-        cpu_union out;                              \
-        switch (size) {                             \
-        case w1:                                    \
-            out.u1 = OPERATOR val.u1;               \
-            break;                                  \
-        case w2:                                    \
-            out.u2 = OPERATOR val.u2;               \
-            break;                                  \
-        case w4:                                    \
-            out.u4 = OPERATOR val.u4;               \
-            break;                                  \
-        case w8:                                    \
-            out.u8 = OPERATOR val.u8;               \
-            break;                                  \
-        }                                           \
-        cpu_setloc(cpu, to_l, size, out);           \
-    }                                               \
-
+#define UNARY_FUNC(NAME, OPERATOR)                                             \
+    void NAME(CPU *cpu, cpu_size size) {                                       \
+        uint16_t a_l = get_operand(cpu, w2);                                   \
+        uint16_t to_l = get_operand(cpu, w2);                                  \
+        cpu_union val = cpu_getloc(cpu, a_l, size);                            \
+        cpu_union out;                                                         \
+        switch (size) {                                                        \
+        case w1:                                                               \
+            out.u1 = OPERATOR val.u1;                                          \
+            break;                                                             \
+        case w2:                                                               \
+            out.u2 = OPERATOR val.u2;                                          \
+            break;                                                             \
+        case w4:                                                               \
+            out.u4 = OPERATOR val.u4;                                          \
+            break;                                                             \
+        case w8:                                                               \
+            out.u8 = OPERATOR val.u8;                                          \
+            break;                                                             \
+        }                                                                      \
+        cpu_setloc(cpu, to_l, size, out);                                      \
+    }
 
 /**
  * @brief data manipulation instructions.
  *
- * These all take 3 operands, op1 and op2 are parameters to the operation. op3 is the destination.
+ * These all take 3 operands, op1 and op2 are parameters to the operation. op3
+ * is the destination.
  */
 
 MATH_FUNC(add, +, u)
@@ -110,7 +108,6 @@ MATH_FUNC(udiv, /, u)
 MATH_FUNC(idiv, /, s)
 MATH_FUNC(shl, <<, u)
 MATH_FUNC(shr, >>, u)
-MATH_FUNC(sal, <<, s)
 MATH_FUNC(sar, >>, s)
 MATH_FUNC(and, &, u)
 MATH_FUNC(or, |, u)
@@ -123,9 +120,8 @@ MATH_FUNC (xor, ^, u)
 
 UNARY_FUNC(neg, -)
 UNARY_FUNC(pos, +)
-UNARY_FUNC(lnot, !)  //: Logical not
-UNARY_FUNC(bnot, ~)  //: Bitwise not
-
+UNARY_FUNC(lnot, !) //: Logical not
+UNARY_FUNC(bnot, ~) //: Bitwise not
 
 /**
  * @brief MOV instruction: copy op1 into op2
@@ -313,5 +309,6 @@ void putc_(CPU *cpu, cpu_size size) {
 }
 
 const instr_fp instruction_set[]
-= {mov, add, sub, mul, udiv, idiv, shl,  shr, sal,  sar, and,   or,   xor,
-       sxu, sxi, halt, jmp,  stks, push, pop, call, ret, getc_, putc_};
+    = {mov, add,  sub, mul,   udiv,  idiv, shl, shr,  sar,
+       and, or,   xor, sxu,   sxi,   halt, jmp, stks, push,
+       pop, call, ret, getc_, putc_, neg,  pos, bnot, lnot};
