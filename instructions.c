@@ -24,12 +24,15 @@ uint64_t get_operand(CPU *cpu, cpu_size size) {
     case w1:
         return r.u1;
     case w2:
-        return ((r.u2 & 0xff00) >> 8) | ((r.u2 & 0x00ff) << 8);
+        return ((r.u2 & 0xff00) >> 8)
+            |  ((r.u2 & 0x00ff) << 8);
     case w4:
-        return ((r.u4 & 0x000000ff) << 24) | ((r.u4 & 0x0000ff00) << 8)
-               | ((r.u4 & 0x0ff00000) >> 8) | ((r.u4 & 0xff000000) >> 24);
+        return ((r.u4 & 0x000000ff) << 24)
+            |  ((r.u4 & 0x0000ff00) << 8)
+            |  ((r.u4 & 0x0ff00000) >> 8)
+            |  ((r.u4 & 0xff000000) >> 24);
     case w8:
-        return ((r.u8 & 0xff00000000000000) << 56)
+        return ((r.u8 & 0xff00000000000000) >> 56)
                | ((r.u8 & 0x00ff000000000000) >> 40)
                | ((r.u8 & 0x0000ff0000000000) >> 24)
                | ((r.u8 & 0x000000ff00000000) >> 8)
