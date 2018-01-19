@@ -1,6 +1,6 @@
-mov %aaa 'g';
-putc %aaa;
-sub %aaa 'a' %aaa;
-add %aaa 'A' %aaa;
-putc %aaa;
+mov8 %aaa 3;
+mov8 %bbb 20;
+mul8 %aaa %bbb %ccc;
+putc8 %ccc;
 halt;
+

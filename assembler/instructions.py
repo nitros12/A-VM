@@ -2,8 +2,9 @@ import enum
 
 
 class ops(enum.IntEnum):
-    (mov, add, sub, mul, udiv, idiv, shl, shr, sal, sar, and_, or_, xor, sxu, sxi,
-     halt, jmp, stks, push, pop, call, ret, getc, putc) = range(24)
+    (mov, add, sub, mul, udiv, idiv, shl, shr, sar,
+     and_, or_, xor, sxu, sxi, halt, jmp, stks, push,
+     pop, call, ret, getc, putc, neg, pos, bnot, lnot) = range(27)
 
 
 class Register(enum.IntEnum):
@@ -62,7 +63,7 @@ class Instruction:
         return len(self.args) + 1
 
     def compile(self, context):
-        comp = hexpad(self.instr | self.size << 6, 2) + "".join(
+        comp = hexpad(self.instr | self.size << 6, 4) + "".join(
             i.compile(context) for i in self.args)
         print(f"compiling: {self} -> {comp}")
         return comp
