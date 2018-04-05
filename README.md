@@ -1,3 +1,6 @@
+# Dead
+we moved here now: https://github.com/nitros12/vm-rust
+
 # A-VM
 The other VM was meh, so rewrite time.
 
